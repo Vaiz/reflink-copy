@@ -70,7 +70,7 @@ jobs:
         drive-format: ReFS
         drive-type: Dynamic
         drive-path: "dev_drive.vhdx"
-        mount-path: "X:"
+        mount-path: "${{ github.workspace }}/dev-drive"
 
     - name: Test
       if: "! matrix.use-cross"
