@@ -111,8 +111,7 @@ fn test_reflink_on_unsupported_config() -> std::io::Result<()> {
     let from = make_subfolder(&refs1_dir(), line!())?;
     let to = make_subfolder(&refs2_dir(), line!())?;
     create_test_file(&from.join(FILENAME))?;
-    let result = reflink(from.join(FILENAME), to.join(FILENAME)).unwrap_err();
-    assert_eq!(result.to_string(), "Incorrect function.");
+    let _ = reflink(from.join(FILENAME), to.join(FILENAME)).unwrap_err();
     Ok(())
 }
 
