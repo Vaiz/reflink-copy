@@ -4,7 +4,7 @@ use reflink_copy::{check_reflink_support, reflink, reflink_or_copy, ReflinkSuppo
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-const FILE_SIZE: usize = 1 * 1024 * 1024;
+const FILE_SIZE: usize = 256 * 1024;
 const FILENAME: &str = "test_file.dat";
 
 // paths are defined in build.yml
