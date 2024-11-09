@@ -110,7 +110,6 @@ fn test_reflink_on_unsupported_config() -> std::io::Result<()> {
     Ok(())
 }
 
-
 #[test]
 #[ignore]
 fn test_reflink_or_copy_on_supported_config() -> std::io::Result<()> {
@@ -121,7 +120,6 @@ fn test_reflink_or_copy_on_supported_config() -> std::io::Result<()> {
     assert_eq!(result, None);
     Ok(())
 }
-
 
 #[test]
 #[ignore]
