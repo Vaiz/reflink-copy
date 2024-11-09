@@ -130,7 +130,7 @@ fn test_reflink_or_copy_on_supported_config() -> std::io::Result<()> {
 #[ignore]
 fn test_reflink_or_copy_on_unsupported_config() -> std::io::Result<()> {
     let from = make_subfolder(&refs1_dir(), line!())?;
-    let to = make_subfolder(&refs1_dir(), line!())?;
+    let to = make_subfolder(&refs2_dir(), line!())?;
     create_test_file(&from.join(FILENAME))?;
     let result = reflink_or_copy(from.join(FILENAME), to.join(FILENAME))?;
     assert_eq!(result, Some(FILE_SIZE as u64));
