@@ -69,8 +69,8 @@ jobs:
         drive-size: 1GB
         drive-format: ReFS
         drive-type: Dynamic
-        drive-path: "${{ github.runner_temp }}/dev-drives/refs1.vhdx"
-        mount-path: "${{ github.runner_temp }}/dev-drives/refs1"
+        drive-path: "${{ runner.temp }}/dev-drives/refs1.vhdx"
+        mount-path: "${{ runner.temp }}/dev-drives/refs1"
 
     - name: Setup Dev-Drive ReFS2
       if: ${{ matrix.os == 'windows-latest' }}
@@ -79,8 +79,8 @@ jobs:
         drive-size: 1GB
         drive-format: ReFS
         drive-type: Dynamic
-        drive-path: "${{ github.runner_temp }}/dev-drives/refs2.vhdx"
-        mount-path: "${{ github.runner_temp }}/dev-drives/refs2"
+        drive-path: "${{ runner.temp }}/dev-drives/refs2.vhdx"
+        mount-path: "${{ runner.temp }}/dev-drives/refs2"
 
     - name: Setup Dev-Drive NTFS
       if: ${{ matrix.os == 'windows-latest' }}
@@ -89,8 +89,8 @@ jobs:
         drive-size: 1GB
         drive-format: NTFS
         drive-type: Dynamic
-        drive-path: "${{ github.runner_temp }}/dev-drives/ntfs.vhdx"
-        mount-path: "${{ github.runner_temp }}/dev-drives/ntfs"
+        drive-path: "${{ runner.temp }}/dev-drives/ntfs.vhdx"
+        mount-path: "${{ runner.temp }}/dev-drives/ntfs"
 
     - name: Test
       if: "! matrix.use-cross"
