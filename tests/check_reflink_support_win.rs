@@ -20,6 +20,12 @@ fn ntfs_dir() -> PathBuf {
 
 #[test]
 #[ignore]
+fn test_correct_deployment() {
+    assert!(temp_dir().join("dev-drives").join("ntfs.vhdx").exists());
+}
+
+#[test]
+#[ignore]
 fn test_reflink_support_refs1_to_refs2() {
     let result = check_reflink_support(refs1_dir(), refs2_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
