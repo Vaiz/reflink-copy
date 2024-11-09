@@ -22,8 +22,10 @@ fn ntfs_dir() -> PathBuf {
     temp_dir().join("dev-drives").join("ntfs")
 }
 
-fn subfolder_path(folder: &Path, line: u32) -> PathBuf {
-    folder.join(format!("subfolder_{line}"))
+fn make_subfolder(folder: &Path, line: u32) -> std::io::Result<PathBuf> {
+    let subfolder = folder.join(format!("subfolder_{line}"));
+    std::fs::create_dir_all(&subfolder)?;
+    Ok(subfolder)
 }
 
 fn create_test_file(path: &Path) -> std::io::Result<()> {
@@ -48,8 +50,8 @@ fn test_reflink_support_refs1_to_refs2() {
     let result = check_reflink_support(refs1_dir(), refs2_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&refs2_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&refs2_dir(), line!());
     let result = check_reflink_support(from, to).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 }
@@ -60,8 +62,8 @@ fn test_reflink_support_ntfs_to_refs1() {
     let result = check_reflink_support(ntfs_dir(), refs1_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 
-    let from = subfolder_path(&ntfs_dir(), line!());
-    let to = subfolder_path(&refs1_dir(), line!());
+    let from = make_subfolder(&ntfs_dir(), line!());
+    let to = make_subfolder(&refs1_dir(), line!());
     let result = check_reflink_support(from, to).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 }
@@ -72,8 +74,8 @@ fn test_reflink_support_refs1_to_ntfs() {
     let result = check_reflink_support(refs1_dir(), ntfs_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&ntfs_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&ntfs_dir(), line!());
     let result = check_reflink_support(from, to).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 }
@@ -84,8 +86,8 @@ fn test_reflink_support_refs1() {
     let result = check_reflink_support(refs1_dir(), refs1_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::Supported);
 
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&refs1_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&refs1_dir(), line!());
     let result = check_reflink_support(from, to).unwrap();
     assert_eq!(result, ReflinkSupport::Supported);
 }
@@ -93,8 +95,8 @@ fn test_reflink_support_refs1() {
 #[test]
 #[ignore]
 fn test_reflink_on_supported_config() -> std::io::Result<()> {
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&refs1_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&refs1_dir(), line!());
     create_test_file(&from.join(FILENAME))?;
     reflink(from.join(FILENAME), to.join(FILENAME))
 }
@@ -102,8 +104,8 @@ fn test_reflink_on_supported_config() -> std::io::Result<()> {
 #[test]
 #[ignore]
 fn test_reflink_on_unsupported_config() -> std::io::Result<()> {
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&refs2_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&refs2_dir(), line!());
     create_test_file(&from.join(FILENAME))?;
     let result = reflink(from.join(FILENAME), to.join(FILENAME)).unwrap_err();
     assert_eq!(result.to_string(), "Incorrect function.");
@@ -113,8 +115,8 @@ fn test_reflink_on_unsupported_config() -> std::io::Result<()> {
 #[test]
 #[ignore]
 fn test_reflink_or_copy_on_supported_config() -> std::io::Result<()> {
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&refs1_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&refs1_dir(), line!());
     create_test_file(&from.join(FILENAME))?;
     let result = reflink_or_copy(from.join(FILENAME), to.join(FILENAME))?;
     assert_eq!(result, None);
@@ -124,8 +126,8 @@ fn test_reflink_or_copy_on_supported_config() -> std::io::Result<()> {
 #[test]
 #[ignore]
 fn test_reflink_or_copy_on_unsupported_config() -> std::io::Result<()> {
-    let from = subfolder_path(&refs1_dir(), line!());
-    let to = subfolder_path(&refs1_dir(), line!());
+    let from = make_subfolder(&refs1_dir(), line!());
+    let to = make_subfolder(&refs1_dir(), line!());
     create_test_file(&from.join(FILENAME))?;
     let result = reflink_or_copy(from.join(FILENAME), to.join(FILENAME))?;
     assert_eq!(result, Some(FILE_SIZE as u64));
