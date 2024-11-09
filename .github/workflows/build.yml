@@ -92,17 +92,13 @@ jobs:
         drive-path: "${{ github.runner_temp }}/dev-drives/ntfs.vhdx"
         mount-path: "${{ github.runner_temp }}/dev-drives/ntfs"
 
-    - name: Enable CI test config
-      if: ${{ matrix.os == 'windows-latest' }}
-      run: $env:RUSTFLAGS="--cfg test_with_dev_drive"
-
     - name: Test
       if: "! matrix.use-cross"
-      run: cargo test --target ${{ matrix.target }}
+      run: cargo test --target ${{ matrix.target }} -- --ignored
 
     - name: Test using cross
       if: "matrix.use-cross"
-      run: cross test --target ${{ matrix.target }}
+      run: cross test --target ${{ matrix.target }} -- --ignored
 
   cross-check:
     strategy:

@@ -1,8 +1,7 @@
 #![cfg(windows)]
-#![cfg(test_with_dev_drive)]
 
 use reflink_copy::{check_reflink_support, ReflinkSupport};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // paths are defined in build.yml
 
@@ -20,24 +19,28 @@ fn ntfs_dir() -> PathBuf {
 }
 
 #[test]
+#[ignore]
 fn test_reflink_support_refs1_to_refs2() {
     let result = check_reflink_support(refs1_dir(), refs2_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 }
 
 #[test]
+#[ignore]
 fn test_reflink_support_ntfs_to_refs1() {
     let result = check_reflink_support(ntfs_dir(), refs1_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 }
 
 #[test]
+#[ignore]
 fn test_reflink_support_refs1_to_ntfs() {
     let result = check_reflink_support(refs1_dir(), ntfs_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::NotSupported);
 }
 
 #[test]
+#[ignore]
 fn test_reflink_support_refs1() {
     let result = check_reflink_support(refs1_dir(), refs1_dir()).unwrap();
     assert_eq!(result, ReflinkSupport::Supported);
