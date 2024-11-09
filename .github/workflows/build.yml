@@ -94,7 +94,7 @@ jobs:
 
     - name: Test
       if: "! matrix.use-cross"
-      run: RUSTFLAGS="--cfg test_with_dev_drive" cargo test --target ${{ matrix.target }}
+      run: $env:RUSTFLAGS="--cfg test_with_dev_drive"; cargo test --target ${{ matrix.target }}
 
     - name: Test using cross
       if: "matrix.use-cross"
