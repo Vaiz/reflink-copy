@@ -1,4 +1,5 @@
 #![cfg(windows)]
+#![cfg(test_with_dev_drive)]
 
 use reflink_copy::{check_reflink_support, ReflinkSupport};
 use std::path::Path;

@@ -28,6 +28,10 @@ windows = { version = "0.58.0", features = ["Win32_Storage_FileSystem", "Win32_F
 [features]
 tracing = ["dep:tracing", "dep:tracing-attributes"]
 
+[target.'cfg(windows)']
+[profile.test_with_dev_drive]
+inherits = "test"
+
 [dev-dependencies]
 tempfile = "3.12.0"
 regex = "1.11.1"
