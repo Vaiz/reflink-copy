@@ -9,7 +9,7 @@ fn main() {
 
     let before_reflink = Instant::now();
     match reflink_copy::reflink("base.txt", "reflinked.txt") {
-        Ok(()) => {}
+        Ok(_) => {}
         Err(e) => {
             println!("Error during reflinking:\n{:?}", e);
             fs::remove_file("base.txt").unwrap();

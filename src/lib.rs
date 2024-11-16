@@ -57,9 +57,9 @@ use std::path::Path;
 ///
 /// NOTE that it generates a temporary file and is not atomic.
 #[inline(always)]
-pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<()> {
+pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<u64> {
     #[cfg_attr(feature = "tracing", tracing_attributes::instrument(name = "reflink"))]
-    fn inner(from: &Path, to: &Path) -> io::Result<()> {
+    fn inner(from: &Path, to: &Path) -> io::Result<u64> {
         sys::reflink(from, to).map_err(|err| {
             // Linux and Windows will return an inscrutable error when `from` is a directory or a
             // symlink, so add the real problem to the error. We need to use `fs::symlink_metadata`
@@ -113,42 +113,58 @@ pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<()> {
 /// fail if reflinking failed. Macos supports reflinking symlinks, which is supported by the
 /// fallback.
 #[inline(always)]
-pub fn reflink_or_copy(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<Option<u64>> {
+pub fn reflink_or_copy(
+    from: impl AsRef<Path>,
+    to: impl AsRef<Path>,
+) -> io::Result<(ReflinkOrCopyStatus, u64)> {
     #[cfg_attr(
         feature = "tracing",
         tracing_attributes::instrument(name = "reflink_or_copy")
     )]
-    fn inner(from: &Path, to: &Path) -> io::Result<Option<u64>> {
-        if let Err(err) = sys::reflink(from, to) {
-            match err.kind() {
-                ErrorKind::NotFound | ErrorKind::PermissionDenied | ErrorKind::AlreadyExists => {
-                    return Err(err);
+    fn inner(from: &Path, to: &Path) -> io::Result<(ReflinkOrCopyStatus, u64)> {
+        match sys::reflink(from, to) {
+            Ok(file_size) => Ok((ReflinkOrCopyStatus::Reflink, file_size)),
+            Err(err) => {
+                match err.kind() {
+                    ErrorKind::NotFound
+                    | ErrorKind::PermissionDenied
+                    | ErrorKind::AlreadyExists => {
+                        return Err(err);
+                    }
+                    _ => {}
                 }
-                _ => {}
+
+                #[cfg(feature = "tracing")]
+                tracing::warn!(?err, "Failed to reflink, fallback to fs::copy");
+
+                fs::copy(from, to)
+                    .map(|file_size| (ReflinkOrCopyStatus::Copy, file_size))
+                    .map_err(|err| {
+                        // Both regular files and symlinks to regular files can be copied, so unlike
+                        // `reflink` we don't want to report invalid input on both files and symlinks
+                        if from.is_file() {
+                            err
+                        } else {
+                            io::Error::new(
+                                io::ErrorKind::InvalidInput,
+                                format!("the source path is not an existing regular file: {}", err),
+                            )
+                        }
+                    })
             }
-
-            #[cfg(feature = "tracing")]
-            tracing::warn!(?err, "Failed to reflink, fallback to fs::copy");
-
-            fs::copy(from, to).map(Some).map_err(|err| {
-                // Both regular files and symlinks to regular files can be copied, so unlike
-                // `reflink` we don't want to report invalid input on both files and symlinks
-                if from.is_file() {
-                    err
-                } else {
-                    io::Error::new(
-                        io::ErrorKind::InvalidInput,
-                        format!("the source path is not an existing regular file: {}", err),
-                    )
-                }
-            })
-        } else {
-            Ok(None)
         }
     }
 
     inner(from.as_ref(), to.as_ref())
 }
+
+/// Enum indicating the result of [`reflink_or_copy`] call.
+#[derive(Debug, PartialEq, Eq)]
+pub enum ReflinkOrCopyStatus {
+    Reflink,
+    Copy,
+}
+
 /// Checks whether reflink is supported on the filesystem for the specified source and target paths.
 ///
 /// This function verifies that both paths are on the same volume and that the filesystem supports

@@ -9,5 +9,6 @@ fn main() -> std::io::Result<()> {
     let src_file = &args[1];
     let tgt_file = &args[2];
 
-    reflink_copy::reflink(src_file, tgt_file)
+    let _ = reflink_copy::reflink(src_file, tgt_file)?;
+    Ok(())
 }
