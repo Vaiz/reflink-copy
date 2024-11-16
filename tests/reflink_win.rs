@@ -1,6 +1,8 @@
 #![cfg(windows)]
 
-use reflink_copy::{check_reflink_support, reflink, reflink_or_copy, ReflinkOrCopyStatus, ReflinkSupport};
+use reflink_copy::{
+    check_reflink_support, reflink, reflink_or_copy, ReflinkOrCopyStatus, ReflinkSupport,
+};
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
@@ -123,7 +125,7 @@ fn test_reflink_or_copy_on_supported_config() -> std::io::Result<()> {
     let to = make_subfolder(&refs1_dir(), line!())?;
     create_test_file(&from.join(FILENAME))?;
     let result = reflink_or_copy(from.join(FILENAME), to.join(FILENAME))?;
-    assert_eq!(result, (ReflinkOrCopyStatus::Reflink, FILE_SIZE as u64));
+    assert_eq!(result, ReflinkOrCopyStatus::Reflink);
     Ok(())
 }
 
@@ -134,6 +136,6 @@ fn test_reflink_or_copy_on_unsupported_config() -> std::io::Result<()> {
     let to = make_subfolder(&refs2_dir(), line!())?;
     create_test_file(&from.join(FILENAME))?;
     let result = reflink_or_copy(from.join(FILENAME), to.join(FILENAME))?;
-    assert_eq!(result, (ReflinkOrCopyStatus::Copy, FILE_SIZE as u64));
+    assert_eq!(result, ReflinkOrCopyStatus::Copy(FILE_SIZE as u64));
     Ok(())
 }

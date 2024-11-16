@@ -30,7 +30,7 @@ use windows::Win32::{
     },
 };
 
-pub fn reflink(from: &Path, to: &Path) -> io::Result<u64> {
+pub fn reflink(from: &Path, to: &Path) -> io::Result<()> {
     // Inspired by https://github.com/0xbadfca11/reflink/blob/master/reflink.cpp
     let src = File::open(from)?;
 
@@ -133,7 +133,7 @@ pub fn reflink(from: &Path, to: &Path) -> io::Result<u64> {
     }
 
     dest.persist();
-    Ok(src_file_size)
+    Ok(())
 }
 
 /// Additional functionality for windows files, needed for reflink

@@ -57,9 +57,9 @@ use std::path::Path;
 ///
 /// NOTE that it generates a temporary file and is not atomic.
 #[inline(always)]
-pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<u64> {
+pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<()> {
     #[cfg_attr(feature = "tracing", tracing_attributes::instrument(name = "reflink"))]
-    fn inner(from: &Path, to: &Path) -> io::Result<u64> {
+    fn inner(from: &Path, to: &Path) -> io::Result<()> {
         sys::reflink(from, to).map_err(|err| {
             // Linux and Windows will return an inscrutable error when `from` is a directory or a
             // symlink, so add the real problem to the error. We need to use `fs::symlink_metadata`
@@ -116,14 +116,14 @@ pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<u64> 
 pub fn reflink_or_copy(
     from: impl AsRef<Path>,
     to: impl AsRef<Path>,
-) -> io::Result<(ReflinkOrCopyStatus, u64)> {
+) -> io::Result<ReflinkOrCopyStatus> {
     #[cfg_attr(
         feature = "tracing",
         tracing_attributes::instrument(name = "reflink_or_copy")
     )]
-    fn inner(from: &Path, to: &Path) -> io::Result<(ReflinkOrCopyStatus, u64)> {
+    fn inner(from: &Path, to: &Path) -> io::Result<ReflinkOrCopyStatus> {
         match sys::reflink(from, to) {
-            Ok(file_size) => Ok((ReflinkOrCopyStatus::Reflink, file_size)),
+            Ok(()) => Ok(ReflinkOrCopyStatus::Reflink),
             Err(err) => {
                 match err.kind() {
                     ErrorKind::NotFound
@@ -138,7 +138,7 @@ pub fn reflink_or_copy(
                 tracing::warn!(?err, "Failed to reflink, fallback to fs::copy");
 
                 fs::copy(from, to)
-                    .map(|file_size| (ReflinkOrCopyStatus::Copy, file_size))
+                    .map(|file_size| ReflinkOrCopyStatus::Copy(file_size))
                     .map_err(|err| {
                         // Both regular files and symlinks to regular files can be copied, so unlike
                         // `reflink` we don't want to report invalid input on both files and symlinks
@@ -162,7 +162,7 @@ pub fn reflink_or_copy(
 #[derive(Debug, PartialEq, Eq)]
 pub enum ReflinkOrCopyStatus {
     Reflink,
-    Copy,
+    Copy(u64),
 }
 
 /// Checks whether reflink is supported on the filesystem for the specified source and target paths.

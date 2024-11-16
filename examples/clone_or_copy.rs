@@ -11,10 +11,10 @@ fn main() -> std::io::Result<()> {
     let src_file = &args[1];
     let tgt_file = &args[2];
 
-    let (status, _) = reflink_copy::reflink_or_copy(src_file, tgt_file)?;
+    let status = reflink_copy::reflink_or_copy(src_file, tgt_file)?;
     match status {
         ReflinkOrCopyStatus::Reflink => println!("File has been cloned"),
-        ReflinkOrCopyStatus::Copy => println!("File has been copied"),
+        ReflinkOrCopyStatus::Copy(_) => println!("File has been copied"),
     }
     Ok(())
 }

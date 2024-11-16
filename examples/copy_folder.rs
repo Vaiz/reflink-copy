@@ -19,7 +19,6 @@ fn main() -> io::Result<()> {
     println!("Reflink support: {reflink_support:?}");
 
     let mut reflinked_count = 0u64;
-    let mut reflinked_data_size = 0u64;
     let mut copied_count = 0u64;
     let mut copied_data_size = 0u64;
 
@@ -33,20 +32,19 @@ fn main() -> io::Result<()> {
         } else {
             match reflink_support {
                 ReflinkSupport::Supported => {
-                    let file_size = reflink_copy::reflink(entry.path(), target_path)?;
+                    reflink_copy::reflink(entry.path(), target_path)?;
                     reflinked_count = reflinked_count.saturating_add(1);
-                    reflinked_data_size = reflinked_data_size.saturating_add(file_size);
                 }
                 ReflinkSupport::Unknown => {
-                    let (status, file_size) = reflink_copy::reflink_or_copy(entry.path(), target_path)?;
+                    let status = reflink_copy::reflink_or_copy(entry.path(), target_path)?;
                     match status {
                         ReflinkOrCopyStatus::Reflink => {
                             reflinked_count = reflinked_count.saturating_add(1);
-                            reflinked_data_size = reflinked_data_size.saturating_add(file_size);
                         }
-                        ReflinkOrCopyStatus::Copy => {
+                        ReflinkOrCopyStatus::Copy(file_size) => {
                             copied_count = copied_count.saturating_add(1);
-                            copied_data_size = copied_data_size.saturating_add(file_size);}
+                            copied_data_size = copied_data_size.saturating_add(file_size);
+                        }
                     }
                 }
                 ReflinkSupport::NotSupported => {
@@ -59,7 +57,6 @@ fn main() -> io::Result<()> {
     }
 
     println!("reflinked files count: {reflinked_count}");
-    println!("reflinked data size: {reflinked_data_size} bytes");
     println!("copied files count: {copied_count}");
     println!("copied data size: {copied_data_size} bytes");
     Ok(())
