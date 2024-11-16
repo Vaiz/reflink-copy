@@ -97,10 +97,11 @@ pub fn reflink(from: impl AsRef<Path>, to: impl AsRef<Path>) -> io::Result<()> {
 /// If target file already exists, operation fails with [`ErrorKind::AlreadyExists`].
 ///
 /// ```rust
+/// use reflink_copy::ReflinkOrCopyStatus;
 /// match reflink_copy::reflink_or_copy("src.txt", "dest.txt") {
-///     Ok(None) => println!("file has been reflinked"),
-///     Ok(Some(written)) => println!("file has been copied ({} bytes)", written),
-///     Err(e) => println!("an error occured: {:?}", e)
+///     Ok(ReflinkOrCopyStatus::Reflink) => println!("file has been reflinked"),
+///     Ok(ReflinkOrCopyStatus::Copy(written)) => println!("file has been copied ({} bytes)", written),
+///     Err(e) => println!("an error occurred: {e:?}")
 /// }
 /// ```
 ///
