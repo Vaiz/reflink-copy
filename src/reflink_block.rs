@@ -66,16 +66,16 @@ use std::num::NonZeroU64;
 /// [`reflink`]: crate::reflink
 /// [`reflink_or_copy`]: crate::reflink_or_copy
 #[derive(Debug, Default)]
-pub struct ReflinkBlockBuilder<'a> {
-    from: Option<&'a File>,
+pub struct ReflinkBlockBuilder<'from, 'to> {
+    from: Option<&'from File>,
     from_offset: u64,
-    to: Option<&'a File>,
+    to: Option<&'to File>,
     to_offset: u64,
     src_length: u64,
     cluster_size: Option<NonZeroU64>,
 }
 
-impl<'a> ReflinkBlockBuilder<'a> {
+impl<'from, 'to> ReflinkBlockBuilder<'from, 'to> {
     /// Creates a new instance of [`ReflinkBlockBuilder`].
     pub fn new() -> Self {
         Self::default()
@@ -83,7 +83,7 @@ impl<'a> ReflinkBlockBuilder<'a> {
 
     /// Sets the source file.
     #[must_use]
-    pub fn from(mut self, from: &'a File) -> ReflinkBlockBuilder<'a> {
+    pub fn from(mut self, from: &'from File) -> ReflinkBlockBuilder<'from, 'to> {
         self.from = Some(from);
         self
     }
@@ -97,7 +97,7 @@ impl<'a> ReflinkBlockBuilder<'a> {
 
     /// Sets the destination file.
     #[must_use]
-    pub fn to(mut self, to: &'a File) -> ReflinkBlockBuilder<'a> {
+    pub fn to(mut self, to: &'to File) -> ReflinkBlockBuilder<'from, 'to> {
         self.to = Some(to);
         self
     }
