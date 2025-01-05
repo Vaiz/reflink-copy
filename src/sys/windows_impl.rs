@@ -362,11 +362,14 @@ pub(crate) fn reflink_block(
     src_length: u64,
     cluster_size: Option<NonZeroU64>,
 ) -> io::Result<()> {
-    const KB: u64 = 1024;
     const GB: u64 = 1024u64 * 1024 * 1024;
+    const MAX_REFS_CLUSTER_SIZE: u64 = 64 * 1024;
 
     // Must be smaller than 4GB; This is always a multiple of ClusterSize
-    let max_io_size = 4u64 * GB - cluster_size.map(NonZeroU64::get).unwrap_or(64 * KB);
+    let max_io_size = 4u64 * GB
+        - cluster_size
+            .map(NonZeroU64::get)
+            .unwrap_or(MAX_REFS_CLUSTER_SIZE);
 
     let mut bytes_copied = 0;
     while bytes_copied < src_length {
