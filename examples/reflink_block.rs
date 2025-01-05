@@ -29,7 +29,6 @@ fn main() -> std::io::Result<()> {
             .cluster_size(NonZeroU64::new(cluster_size).unwrap())
             .reflink_block()?;
 
-        //reflink_block(&from_file, offset, &to_file, offset, cluster_size)?;
         offset += cluster_size;
     }
     Ok(())
