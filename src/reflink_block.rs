@@ -30,6 +30,8 @@ use std::num::NonZeroU64;
 /// - The ReFS volume must have been formatted with Windows Server 2016, and if Windows Failover
 ///   Clustering is in use, the Clustering Functional Level must have been Windows Server 2016 or
 ///   later at format time.
+/// - Note: If block is 4GB or larger, [`ReflinkBlockBuilder::reflink_block`] splits it to multiple
+///   smaller blocks with the size of 4GB minus cluster size.
 ///
 /// More information can be found by the
 /// [link](https://learn.microsoft.com/en-us/windows/win32/fileio/block-cloning).
@@ -74,33 +76,33 @@ pub struct ReflinkBlockBuilder<'a> {
 }
 
 impl<'a> ReflinkBlockBuilder<'a> {
-    /// Creates new instance of [`ReflinkBlockBuilder`].
+    /// Creates a new instance of [`ReflinkBlockBuilder`].
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Sets the source file for the reflink operation.
+    /// Sets the source file.
     #[must_use]
     pub fn from(mut self, from: &'a File) -> ReflinkBlockBuilder<'a> {
         self.from = Some(from);
         self
     }
 
-    /// Sets the offset within the source file for the reflink operation.
+    /// Sets the offset within the source file.
     #[must_use]
     pub fn from_offset(mut self, from_offset: u64) -> Self {
         self.from_offset = from_offset;
         self
     }
 
-    /// Sets the destination file for the reflink operation.
+    /// Sets the destination file.
     #[must_use]
     pub fn to(mut self, to: &'a File) -> ReflinkBlockBuilder<'a> {
         self.to = Some(to);
         self
     }
 
-    /// Sets the offset within the destination file for the reflink operation.
+    /// Sets the offset within the destination file.
     #[must_use]
     pub fn to_offset(mut self, to_offset: u64) -> Self {
         self.to_offset = to_offset;
@@ -114,14 +116,15 @@ impl<'a> ReflinkBlockBuilder<'a> {
         self
     }
 
-    /// Sets the cluster size for the reflink operation.
+    /// Sets the cluster size. It is used to calculate the max block size of a single reflink call
+    /// on Windows.
     #[must_use]
     pub fn cluster_size(mut self, cluster_size: NonZeroU64) -> Self {
         self.cluster_size = Some(cluster_size);
         self
     }
 
-    /// Performs the reflink operation for the specified block of data.
+    /// Performs reflink operation for the specified block of data.
     #[cfg_attr(not(windows), allow(unused_variables))]
     pub fn reflink_block(self) -> io::Result<()> {
         assert!(self.from.is_some(), "`from` is not set");
