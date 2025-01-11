@@ -203,7 +203,7 @@ fn test_reflink_block_whole_file() -> std::io::Result<()> {
 #[test]
 #[ignore]
 fn test_reflink_block_6gb() -> std::io::Result<()> {
-    let data_size = 6 * 1024 * 1024 * 1024;
+    let data_size = 6u64 * 1024 * 1024 * 1024;
     let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
     let to = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
 
