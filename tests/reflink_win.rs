@@ -1,6 +1,8 @@
 #![cfg(windows)]
 
-use reflink_copy::{check_reflink_support, reflink, reflink_or_copy, ReflinkSupport};
+use reflink_copy::{
+    check_reflink_support, reflink, reflink_or_copy, ReflinkBlockBuilder, ReflinkSupport,
+};
 use std::fs::File;
 use std::io::{Read, Write};
 use std::num::NonZeroU64;
@@ -23,19 +25,6 @@ fn refs2_dir() -> PathBuf {
 }
 fn ntfs_dir() -> PathBuf {
     temp_dir().join("dev-drives").join("ntfs")
-}
-
-fn reflink_block(
-    from: &File,
-    from_offset: u64,
-    to: &File,
-    to_offset: u64,
-    src_length: u64,
-) -> std::io::Result<()> {
-    reflink_copy::ReflinkBlockBuilder::new(from, to, NonZeroU64::new(src_length).unwrap())
-        .from_offset(from_offset)
-        .to_offset(to_offset)
-        .reflink_block()
 }
 
 fn make_subfolder(folder: &Path, line: u32) -> std::io::Result<PathBuf> {
@@ -187,7 +176,12 @@ fn test_reflink_block_whole_file() -> std::io::Result<()> {
     let mut dest_file = File::create_new(&to)?;
 
     dest_file.set_len(data_size as u64)?;
-    reflink_block(&source_file, 0, &dest_file, 0, data_size as u64)?;
+    ReflinkBlockBuilder::new(
+        &source_file,
+        &dest_file,
+        NonZeroU64::new(data_size as u64).unwrap(),
+    )
+    .reflink_block()?;
 
     dest_file.flush()?;
     drop(source_file);
@@ -224,7 +218,14 @@ fn test_reflink_unaligned_file() -> std::io::Result<()> {
         from.display(),
         to.display()
     );
-    reflink_block(&source_file, 0, &dest_file, 0, aligned_data_size)?;
+
+    ReflinkBlockBuilder::new(
+        &source_file,
+        &dest_file,
+        NonZeroU64::new(aligned_data_size as u64).unwrap(),
+    )
+    .reflink_block()?;
+
     dest_file.flush()?;
     drop(source_file);
     drop(dest_file);
@@ -255,7 +256,12 @@ fn test_reflink_source_file() -> std::io::Result<()> {
         from.display(),
         from.display()
     );
-    reflink_block(&source_file, 0, &source_file, data_size, data_size)?;
+    ReflinkBlockBuilder::new(
+        &source_file,
+        &source_file,
+        NonZeroU64::new(data_size as u64).unwrap(),
+    )
+    .reflink_block()?;
     source_file.flush()?;
     assert_eq!(source_file.metadata()?.len(), data_size * 2);
     drop(source_file);
@@ -302,13 +308,14 @@ fn test_reflink_block_reverse() -> std::io::Result<()> {
             from.display(),
             to.display()
         );
-        reflink_block(
+        ReflinkBlockBuilder::new(
             &source_file,
-            from_offset as u64,
             &dest_file,
-            to_offset as u64,
-            CLUSTER_SIZE as u64,
-        )?;
+            NonZeroU64::new(CLUSTER_SIZE as u64).unwrap(),
+        )
+        .from_offset(from_offset as u64)
+        .to_offset(to_offset as u64)
+        .reflink_block()?;
     }
     dest_file.flush()?;
     drop(source_file);
