@@ -142,16 +142,25 @@ fn test_reflink_or_copy_on_unsupported_config() -> std::io::Result<()> {
     Ok(())
 }
 
-fn read_file_to_vec(path: &Path) -> std::io::Result<Vec<u8>> {
-    let mut file = File::open(path)?;
-    let mut buffer = Vec::new();
-    file.read_to_end(&mut buffer)?;
-    Ok(buffer)
-}
 fn compare_files_eq(file1: &Path, file2: &Path) -> std::io::Result<()> {
-    let data1 = read_file_to_vec(file1)?;
-    let data2 = read_file_to_vec(file2)?;
-    assert_eq!(data1, data2);
+    let mut f1 = File::open(file1)?;
+    let mut f2 = File::open(file2)?;
+    let block_size = f1.metadata()?.len().min(1024 * 1024) as usize;
+
+    let mut buffer1 = vec![0; block_size];
+    let mut buffer2 = vec![0; block_size];
+
+    loop {
+        let bytes_read1 = f1.read(&mut buffer1)?;
+        let bytes_read2 = f2.read(&mut buffer2)?;
+        assert_eq!(bytes_read1, bytes_read2);
+
+        if bytes_read1 == 0 {
+            break;
+        }
+        assert_eq!(&buffer1[..bytes_read1], &buffer2[..bytes_read1]);
+    }
+
     Ok(())
 }
 
@@ -170,6 +179,39 @@ fn test_reflink_block_whole_file() -> std::io::Result<()> {
         .flat_map(|i| vec![i as u8; CLUSTER_SIZE])
         .collect();
     source_file.write_all(&data)?;
+    source_file.flush()?;
+    assert_eq!(source_file.metadata()?.len(), data_size as u64);
+
+    let mut dest_file = File::create_new(&to)?;
+
+    dest_file.set_len(data_size as u64)?;
+    ReflinkBlockBuilder::new(
+        &source_file,
+        &dest_file,
+        NonZeroU64::new(data_size as u64).unwrap(),
+    )
+    .reflink_block()?;
+
+    dest_file.flush()?;
+    drop(source_file);
+    drop(dest_file);
+
+    compare_files_eq(&from, &to)?;
+    Ok(())
+}
+
+#[test]
+#[ignore]
+fn test_reflink_block_6gb() -> std::io::Result<()> {
+    let data_size = 6 * 1024 * 1024 * 1024;
+    let num_clusters = data_size / CLUSTER_SIZE;
+
+    let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
+    let to = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
+
+    let mut source_file = File::create_new(&from)?;
+    source_file.set_len(data_size as u64)?;
+    // to make test faster, we don't write anything to the file
     source_file.flush()?;
     assert_eq!(source_file.metadata()?.len(), data_size as u64);
 
