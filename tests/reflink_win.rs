@@ -204,8 +204,6 @@ fn test_reflink_block_whole_file() -> std::io::Result<()> {
 #[ignore]
 fn test_reflink_block_6gb() -> std::io::Result<()> {
     let data_size = 6 * 1024 * 1024 * 1024;
-    let num_clusters = data_size / CLUSTER_SIZE;
-
     let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
     let to = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
 
