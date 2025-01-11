@@ -1,6 +1,7 @@
 #![cfg(windows)]
 
 use reflink_copy::{check_reflink_support, reflink, reflink_or_copy, ReflinkSupport};
+use std::fs::File;
 use std::io::{Read, Write};
 use std::num::NonZeroU64;
 use std::path::{Path, PathBuf};
@@ -25,9 +26,9 @@ fn ntfs_dir() -> PathBuf {
 }
 
 fn reflink_block(
-    from: &std::fs::File,
+    from: &File,
     from_offset: u64,
-    to: &std::fs::File,
+    to: &File,
     to_offset: u64,
     src_length: u64,
 ) -> std::io::Result<()> {
@@ -48,7 +49,7 @@ fn create_test_file(path: &Path) -> std::io::Result<()> {
         std::fs::create_dir_all(folder)?;
     }
 
-    let mut file = std::fs::File::create(path)?;
+    let mut file = File::create(path)?;
     file.write_all(&vec![0u8; FILE_SIZE])?;
     Ok(())
 }
@@ -153,7 +154,7 @@ fn test_reflink_or_copy_on_unsupported_config() -> std::io::Result<()> {
 }
 
 fn read_file_to_vec(path: &Path) -> std::io::Result<Vec<u8>> {
-    let mut file = std::fs::File::open(path)?;
+    let mut file = File::open(path)?;
     let mut buffer = Vec::new();
     file.read_to_end(&mut buffer)?;
     Ok(buffer)
@@ -174,7 +175,7 @@ fn test_reflink_block_whole_file() -> std::io::Result<()> {
     let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
     let to = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
 
-    let mut source_file = std::fs::File::create_new(&from)?;
+    let mut source_file = File::create_new(&from)?;
 
     let data: Vec<u8> = (1..=num_clusters)
         .flat_map(|i| vec![i as u8; CLUSTER_SIZE])
@@ -183,7 +184,7 @@ fn test_reflink_block_whole_file() -> std::io::Result<()> {
     source_file.flush()?;
     assert_eq!(source_file.metadata()?.len(), data_size as u64);
 
-    let mut dest_file = std::fs::File::create_new(&to)?;
+    let mut dest_file = File::create_new(&to)?;
 
     dest_file.set_len(data_size as u64)?;
     reflink_block(&source_file, 0, &dest_file, 0, data_size as u64)?;
@@ -206,7 +207,7 @@ fn test_reflink_unaligned_file() -> std::io::Result<()> {
     let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
     let to = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
 
-    let mut source_file = std::fs::File::create_new(&from)?;
+    let mut source_file = File::create_new(&from)?;
 
     let data: Vec<u8> = (1..=num_clusters)
         .flat_map(|i| vec![i as u8; CLUSTER_SIZE])
@@ -216,7 +217,7 @@ fn test_reflink_unaligned_file() -> std::io::Result<()> {
     source_file.flush()?;
     assert_eq!(source_file.metadata()?.len(), data_size);
 
-    let mut dest_file = std::fs::File::create_new(&to)?;
+    let mut dest_file = File::create_new(&to)?;
     dest_file.set_len(data_size)?;
     println!(
         "reflink {}:0 -> {}:0, block {data_size}",
@@ -239,7 +240,7 @@ fn test_reflink_source_file() -> std::io::Result<()> {
     let data_size = (CLUSTER_SIZE * num_clusters) as u64;
 
     let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
-    let mut source_file = std::fs::File::create_new(&from)?;
+    let mut source_file = File::create_new(&from)?;
 
     let data: Vec<u8> = (1..=num_clusters)
         .flat_map(|i| vec![i as u8; CLUSTER_SIZE])
@@ -259,7 +260,7 @@ fn test_reflink_source_file() -> std::io::Result<()> {
     assert_eq!(source_file.metadata()?.len(), data_size * 2);
     drop(source_file);
 
-    let mut file = std::fs::File::open(from)?;
+    let mut file = File::open(from)?;
     let mut buffer1 = vec![0u8; data_size as usize];
     let mut buffer2 = vec![0u8; data_size as usize];
     file.read_exact(buffer1.as_mut_slice())?;
@@ -277,7 +278,7 @@ fn test_reflink_block_reverse() -> std::io::Result<()> {
     let from = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
     let to = make_subfolder(&refs2_dir(), line!())?.join(FILENAME);
 
-    let mut source_file = std::fs::File::create_new(&from)?;
+    let mut source_file = File::create_new(&from)?;
 
     let data: Vec<Vec<u8>> = (1..=num_clusters)
         .map(|i| vec![i as u8; CLUSTER_SIZE])
@@ -288,7 +289,7 @@ fn test_reflink_block_reverse() -> std::io::Result<()> {
     source_file.flush()?;
     assert_eq!(source_file.metadata()?.len(), data_size as u64);
 
-    let mut dest_file = std::fs::File::create_new(&to)?;
+    let mut dest_file = File::create_new(&to)?;
 
     dest_file.set_len(data_size as u64)?;
 
