@@ -261,6 +261,7 @@ fn test_reflink_source_file() -> std::io::Result<()> {
         &source_file,
         NonZeroU64::new(data_size as u64).unwrap(),
     )
+    .to_offset(data_size as u64)
     .reflink_block()?;
     source_file.flush()?;
     assert_eq!(source_file.metadata()?.len(), data_size * 2);
