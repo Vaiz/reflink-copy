@@ -11,6 +11,6 @@ cfg_if! {
         pub(crate) use super::reflink_not_supported as reflink_block;
     } else {
         pub use super::reflink_not_supported as reflink;
-        pub(crate) use super::reflink_not_supported as reflink_block;
+        pub(crate) use super::reflink_block_not_supported as reflink_block;
     }
 }
