@@ -1,3 +1,4 @@
+use std::convert::TryInto;
 use std::os::unix::io::AsRawFd;
 use std::{fs, io, path::Path};
 
