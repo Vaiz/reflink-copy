@@ -44,4 +44,4 @@ pub(crate) fn reflink_block(
 }
 
 #[cfg(target_os = "android")]
-use super::reflink_block_not_supported as reflink_block;
+pub(crate) use crate::sys::reflink_block_not_supported as reflink_block;
