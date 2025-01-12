@@ -14,6 +14,7 @@ pub fn reflink(from: &Path, to: &Path) -> io::Result<()> {
     Ok(())
 }
 
+#[cfg(target_os = "linux")]
 pub(crate) fn reflink_block(
     from: &fs::File,
     from_offset: u64,
@@ -41,3 +42,6 @@ pub(crate) fn reflink_block(
         Ok(())
     }
 }
+
+#[cfg(target_os = "android")]
+use super::reflink_block_not_supported as reflink_block;
